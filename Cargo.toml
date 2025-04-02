@@ -1,0 +1,54 @@
+[workspace]
+package.version = "0.1.0"
+package.edition = "2024"
+package.publish = false
+package.authors = ["Salfa <me@salfa.cc>"]
+
+resolver = "3"
+
+
+### Only the same model of chip can be turned on at the same time
+members = [
+    # "f103c8t6", # for GPS
+    # "f401rct6", #
+    "f407zet6", #
+    # "h723vgt6", #
+]
+
+
+# exclude = ["crates/foo", "path/to/other"]
+
+
+[workspace.dependencies]
+toml-cfg     = "0.2"
+defmt        = "1.0"
+defmt-rtt    = "1.0"
+embassy-sync = "0.6"
+
+embedded-io  = { version = "0.6", features = ["defmt-03"] }
+panic-probe  = { version = "1.0", features = ["print-defmt"] }
+cortex-m-rt  = { version = "0.7", features = ["device"] }
+embassy-time = { version = "0.4", features = ["tick-hz-32_768"] }
+
+
+[workspace.dependencies.cortex-m]
+version  = "0.7"
+features = ["critical-section-single-core", "linker-plugin-lto"]
+[workspace.dependencies.embassy-executor]
+version  = "0.7"
+features = ["arch-cortex-m", "executor-thread"]
+[workspace.dependencies.embassy-stm32]
+version  = "0.2"
+features = ["defmt", "memory-x", "time-driver-any"]
+
+
+[profile]
+release.debug = true
+release.lto   = true
+
+[profile.dev.package]
+cortex-m.opt-level         = 3
+cortex-m-rt.opt-level      = 3
+embassy-executor.opt-level = 3
+embassy-time.opt-level     = 3
+embassy-stm32.opt-level    = 3

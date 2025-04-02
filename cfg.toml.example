@@ -1,0 +1,18 @@
+[h723vgt6]
+foo = "bar"
+
+# How to Change the Chip
+# 1. Change the `target`        in the `Cargo.toml`          file
+# 2. add    the `target`        in the `rust-toolchain.toml` file
+# 3. Change the `target cfg`    in the `openocd.cfg`         file
+# 4. Change the `PROBE_RS_CHIP` in the `.cargo/config.toml`  file
+# 5. Change the `target`        in the `.cargo/config.toml`  file
+# 6. Change the `chip`          in the `.vscode/launch.json` file
+
+# How to Change the Project Name
+# 1. Run `cargo clean`
+# 2. Move the project folder to the `name`
+# 3. Change the `name` in the `Cargo.toml` file
+# 4. Change the `[name]` in the `cfg.toml` file
+# Note: Before Debbugging, make sure to
+# run `cargo b` to generate the executable file.

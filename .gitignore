@@ -1,0 +1,11 @@
+# Files
+/Cargo.lock
+/cfg.toml
+
+/*/Cargo.lock
+/*/cfg.toml
+
+# Directories
+/target/
+
+/*/target/
