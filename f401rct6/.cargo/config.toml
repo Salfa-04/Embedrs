@@ -1,7 +1,0 @@
-[env]
-PROBE_RS_CHIP = "STM32F401RC"
-
-EMBASSY_EXECUTOR_TASK_ARENA_SIZE = "1024"
-
-[build]
-target = "thumbv7em-none-eabihf"

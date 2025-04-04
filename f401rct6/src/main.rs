@@ -3,6 +3,8 @@
 
 use utils::prelude::*;
 
+mod test_task;
+
 mod tasks;
 mod utils;
 
@@ -26,15 +28,23 @@ async fn entry(s: embassy_executor::Spawner) {
     }
 
     {
-        let p = (p.USART1, p.PA10, p.DMA2_CH2);
-        s.must_spawn(tasks::servo_ctrl::dbg_task(p));
-    }
-
-    {
         let p = ();
         s.must_spawn(main(p));
     }
 }
 
 #[embassy_executor::task]
-async fn main(_p: ()) {}
+async fn main(_p: ()) {
+    let mut t = init_ticker!(100);
+
+    loop {
+        let rc = tasks::remote_ctrl::get_rc_data().await;
+        tasks::servo_ctrl::set_servo((
+            (rc.ch_r_hori as f32 * 135f32 / 660f32) as i16,
+            (rc.ch_r_vert as f32 * 135f32 / 660f32) as i16,
+        ))
+        .await;
+
+        t.next().await;
+    }
+}

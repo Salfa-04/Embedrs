@@ -1,10 +1,13 @@
 [env]
+PROBE_RS_CHIP = "STM32F401RC"
+
 CARGO_REGISTRY_DEFAULT = "rsproxy"
 PROBE_RS_PROTOCOL      = "swd"
 
 # LOG: trace, debug, info, warn, error
-DEFMT_LOG             = "trace"
-DEFMT_RTT_BUFFER_SIZE = "1024"
+DEFMT_LOG                        = "trace"
+DEFMT_RTT_BUFFER_SIZE            = "1024"
+EMBASSY_EXECUTOR_TASK_ARENA_SIZE = "1024"
 
 
 [alias]
@@ -22,6 +25,7 @@ rustflags = [
     # "-Cforce-frame-pointers",
     # "-Zmacro-backtrace",
 ]
+
 
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
 # linker = "rust-lld"

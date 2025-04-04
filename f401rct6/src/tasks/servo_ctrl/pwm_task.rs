@@ -3,12 +3,12 @@
 //!
 
 use crate::{hal, init_ticker};
-use defmt::{error, info};
+use defmt::info;
 
 use super::pwm_utils::{ServoPwm, pwm_init};
 use embassy_sync::{self as sync, once_lock, signal};
 use hal::peripherals::{PA6, PA7, TIM3};
-use sync::blocking_mutex::raw::ThreadModeRawMutex as RM;
+use sync::blocking_mutex::raw::CriticalSectionRawMutex as RM;
 use {once_lock::OnceLock, signal::Signal};
 
 static MAX_DUTY_CYCLE: OnceLock<u16> = OnceLock::new();
@@ -51,44 +51,24 @@ pub async fn pwm_task(p: (TIM3, PA6, PA7)) -> ! {
     loop {
         if DUTY_CYCLE.signaled() {
             if let Some((x, y)) = DUTY_CYCLE.try_take() {
-                servo.update((x, y));
-                info!("Duty Cycle: {}", (x, y));
+                servo.set((x, y));
+                // info!("Duty Cycle: {}", (x, y));
             }
         }
 
         if servo.finished() {
             let duty_cycle = DUTY_CYCLE.wait().await;
-            servo.update(duty_cycle);
-            info!("Duty Cycle: {}", duty_cycle);
+            servo.set(duty_cycle);
+            // info!("Duty Cycle: {}", duty_cycle);
         }
 
         // Update Step Duty Cycle
         let (ox, oy) = servo.calc();
+        // info!("Duty Cycle: {}", (ox, oy));
 
         ch_x.set_duty_cycle(ox as u16);
         ch_y.set_duty_cycle(oy as u16);
 
         t.next().await;
-    }
-}
-
-pub async fn pwm_set_dbg(data: &[u8]) {
-    for (i, d) in data.split(|&x| x == b',').enumerate() {
-        let s = core::str::from_utf8(d).unwrap().trim();
-        info!("{} Data RCV: {}", i, s);
-
-        match i {
-            0 => {
-                if let Ok(n) = s.parse::<i16>() {
-                    set_servo((n, n)).await;
-                } else {
-                    error!("Invalid Data: {}", s);
-                }
-            }
-
-            _ => {
-                error!("Invalid Data: {}", s);
-            }
-        }
     }
 }

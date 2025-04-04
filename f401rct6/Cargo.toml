@@ -26,5 +26,4 @@ embassy-executor.workspace = true
 embassy-time.workspace     = true
 embassy-sync.workspace     = true
 embedded-io.workspace      = true
-
-embassy-stm32 = { workspace = true, features = ["stm32f401rc"] }
+embassy-stm32.workspace    = true

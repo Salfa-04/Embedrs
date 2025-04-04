@@ -8,7 +8,7 @@ use crate::hal::{peripherals, usart};
 
 use defmt::{Format, debug, error};
 use embassy_sync::{blocking_mutex::raw, mutex::Mutex};
-use raw::ThreadModeRawMutex as RM;
+use raw::CriticalSectionRawMutex as RM;
 use usart::{Config, DataBits, Parity, StopBits, UartRx};
 
 use peripherals::{DMA2_CH1 as DMA_RX, PA12 as UART_RX, USART6 as UART_PERI};
@@ -20,10 +20,10 @@ pub async fn get_rc_data() -> DjiSBusPacket {
 
 #[derive(Debug, Format, Clone)]
 pub struct DjiSBusPacket {
-    pub ch_r_hori: i16,
-    pub ch_r_vert: i16,
     pub ch_l_hori: i16,
     pub ch_l_vert: i16,
+    pub ch_r_hori: i16,
+    pub ch_r_vert: i16,
     pub sw_left: i8,
     pub sw_right: i8,
 }
@@ -51,6 +51,7 @@ pub async fn rc_task(p: (UART_PERI, UART_RX, DMA_RX)) -> ! {
                 parser.push_bytes(&buffer[..x]);
                 if let Some(x) = parser.try_parse() {
                     *RC_DATA.lock().await = x.into();
+                    // debug!("RC Data: {:?}", DjiSBusPacket::from(x));
                 }
             }
 
@@ -82,18 +83,18 @@ impl From<Packet> for DjiSBusPacket {
         };
 
         let s = Self {
-            ch_r_hori: value.channels[0] as i16 - Self::DJI_MIDDL,
-            ch_r_vert: value.channels[1] as i16 - Self::DJI_MIDDL,
             ch_l_hori: value.channels[3] as i16 - Self::DJI_MIDDL,
             ch_l_vert: value.channels[2] as i16 - Self::DJI_MIDDL,
+            ch_r_hori: value.channels[0] as i16 - Self::DJI_MIDDL,
+            ch_r_vert: value.channels[1] as i16 - Self::DJI_MIDDL,
             sw_left: switch(value.channels[5] as i16 - Self::DJI_MIDDL),
             sw_right: switch(value.channels[6] as i16 - Self::DJI_MIDDL),
         };
 
-        assert!(s.ch_r_hori >= -Self::DJI_RANGE && s.ch_r_hori <= Self::DJI_RANGE);
-        assert!(s.ch_r_vert >= -Self::DJI_RANGE && s.ch_r_vert <= Self::DJI_RANGE);
         assert!(s.ch_l_hori >= -Self::DJI_RANGE && s.ch_l_hori <= Self::DJI_RANGE);
         assert!(s.ch_l_vert >= -Self::DJI_RANGE && s.ch_l_vert <= Self::DJI_RANGE);
+        assert!(s.ch_r_hori >= -Self::DJI_RANGE && s.ch_r_hori <= Self::DJI_RANGE);
+        assert!(s.ch_r_vert >= -Self::DJI_RANGE && s.ch_r_vert <= Self::DJI_RANGE);
         assert!(s.sw_left >= -1 && s.sw_left <= 1 && s.sw_right >= -1 && s.sw_right <= 1);
 
         s

@@ -8,7 +8,7 @@ use timer::low_level::CountingMode::EdgeAlignedUp;
 use timer::simple_pwm::{PwmPin, SimplePwm};
 
 pub struct ServoPwm {
-    duty_cycle: (f32, f32),
+    duty_cycle: Option<(f32, f32)>,
     duty_cycle_step: (f32, f32),
 
     duty_step: f32,
@@ -20,36 +20,47 @@ impl ServoPwm {
         Self { duty_step, ..s }
     }
 
-    pub fn update(&mut self, set: (f32, f32)) {
-        self.duty_cycle = set;
+    pub fn set(&mut self, set: (f32, f32)) {
+        if self.duty_cycle.is_none() {
+            self.duty_cycle = Some(set);
+            self.duty_cycle_step = set;
+        } else {
+            self.duty_cycle = Some(set);
+        }
     }
 
     pub fn finished(&self) -> bool {
-        self.duty_cycle_step.0 == self.duty_cycle.0 && self.duty_cycle_step.1 == self.duty_cycle.1
+        if let Some(duty_cycle) = self.duty_cycle {
+            duty_cycle.0 == self.duty_cycle_step.0 && duty_cycle.1 == self.duty_cycle_step.1
+        } else {
+            true
+        }
     }
 
     pub fn calc(&mut self) -> (f32, f32) {
-        if self.duty_cycle.0 > self.duty_cycle_step.0 {
-            self.duty_cycle_step.0 += self.duty_step;
-            if self.duty_cycle.0 <= self.duty_cycle_step.0 {
-                self.duty_cycle_step.0 = self.duty_cycle.0;
+        if let Some(duty_cycle) = self.duty_cycle {
+            if duty_cycle.0 > self.duty_cycle_step.0 {
+                self.duty_cycle_step.0 += self.duty_step;
+                if duty_cycle.0 <= self.duty_cycle_step.0 {
+                    self.duty_cycle_step.0 = duty_cycle.0;
+                }
+            } else if duty_cycle.0 < self.duty_cycle_step.0 {
+                self.duty_cycle_step.0 -= self.duty_step;
+                if duty_cycle.0 >= self.duty_cycle_step.0 {
+                    self.duty_cycle_step.0 = duty_cycle.0;
+                }
             }
-        } else if self.duty_cycle.0 < self.duty_cycle_step.0 {
-            self.duty_cycle_step.0 -= self.duty_step;
-            if self.duty_cycle.0 >= self.duty_cycle_step.0 {
-                self.duty_cycle_step.0 = self.duty_cycle.0;
-            }
-        }
 
-        if self.duty_cycle.1 > self.duty_cycle_step.1 {
-            self.duty_cycle_step.1 += self.duty_step;
-            if self.duty_cycle.1 <= self.duty_cycle_step.1 {
-                self.duty_cycle_step.1 = self.duty_cycle.1;
-            }
-        } else if self.duty_cycle.1 < self.duty_cycle_step.1 {
-            self.duty_cycle_step.1 -= self.duty_step;
-            if self.duty_cycle.1 >= self.duty_cycle_step.1 {
-                self.duty_cycle_step.1 = self.duty_cycle.1;
+            if duty_cycle.1 > self.duty_cycle_step.1 {
+                self.duty_cycle_step.1 += self.duty_step;
+                if duty_cycle.1 <= self.duty_cycle_step.1 {
+                    self.duty_cycle_step.1 = duty_cycle.1;
+                }
+            } else if duty_cycle.1 < self.duty_cycle_step.1 {
+                self.duty_cycle_step.1 -= self.duty_step;
+                if duty_cycle.1 >= self.duty_cycle_step.1 {
+                    self.duty_cycle_step.1 = duty_cycle.1;
+                }
             }
         }
 
@@ -77,21 +88,12 @@ pub async fn pwm_init(
         EdgeAlignedUp,
     );
 
+    let max_duty_cycle = pwm.max_duty_cycle();
     let channels = pwm.split();
     let mut ch_x = channels.ch1;
     let mut ch_y = channels.ch2;
 
     (ch_x.enable(), ch_y.enable());
 
-    let max_duty_cycle_x = ch_x.max_duty_cycle();
-    let max_duty_cycle_y = ch_y.max_duty_cycle();
-
-    assert!(
-        max_duty_cycle_x == max_duty_cycle_y,
-        "[X]{} != [Y]{}",
-        max_duty_cycle_x,
-        max_duty_cycle_y
-    );
-
-    (ch_x, ch_y, max_duty_cycle_x)
+    (ch_x, ch_y, max_duty_cycle)
 }

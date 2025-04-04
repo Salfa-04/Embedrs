@@ -19,9 +19,18 @@ pub mod prelude {
     pub use super::config::CONFIG; // Config
 }
 
+use prelude::hal::{self, bind_interrupts, peripherals};
+bind_interrupts! {
+    pub struct IntRqst {
+        USART1 => hal::usart::InterruptHandler<peripherals::USART1>;
+        USART2 => hal::usart::InterruptHandler<peripherals::USART2>;
+        USART6 => hal::usart::InterruptHandler<peripherals::USART6>;
+    }
+}
+
 pub use init::sys_init;
 
 #[::defmt::panic_handler]
 fn soft_panic() -> ! {
-    panic_probe::hard_fault();
+    panic_probe::hard_fault()
 }

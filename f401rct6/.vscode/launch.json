@@ -19,7 +19,7 @@
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "rttEnabled": false,
+                    "rttEnabled": true,
                     "programBinary": "../target/thumbv7em-none-eabihf/debug/${fileWorkspaceFolderBasename}",
                 }
             ],
