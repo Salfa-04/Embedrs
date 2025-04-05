@@ -1,0 +1,21 @@
+[package]
+name = "embedrs"
+
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+autobenches  = false
+autoexamples = false
+autotests    = false
+
+
+include = ["Cargo.toml", ".cargo", "rust-toolchain.toml", "xtask/*"]
+
+
+[[bin]]
+name = "xtask"
+path = "xtask/entry.rs"
+
+
+[dependencies]

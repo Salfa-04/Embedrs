@@ -4,8 +4,9 @@ PROBE_RS_PROTOCOL      = "swd"
 
 
 [alias]
-rr = "run --release"
-br = "build --release"
+rr = "r -r"
+br = "b -r"
+x  = "rr --"
 
 
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
