@@ -3,7 +3,6 @@
 //!
 
 use crate::{hal, init_ticker};
-use defmt::info;
 
 use super::pwm_utils::{ServoPwm, pwm_init};
 use embassy_sync::{self as sync, once_lock, signal};
@@ -16,11 +15,11 @@ static DUTY_CYCLE: Signal<RM, (f32, f32)> = Signal::new();
 
 /// PWM Duty Cycle Set
 /// x, y: from -135 to 135
-pub async fn set_servo(angle: (i16, i16)) {
+pub async fn set_servo(angle: (f32, f32)) {
     let (x, y) = angle;
 
-    assert!(x >= -135 && x <= 135);
-    assert!(y >= -135 && y <= 135);
+    assert!(x >= -135.0 && x <= 135.0);
+    assert!(y >= -135.0 && y <= 135.0);
 
     let max = *MAX_DUTY_CYCLE.get().await;
     // duty_cycle_percent = (x / 135° + 1.5) / 20ms
@@ -52,19 +51,19 @@ pub async fn pwm_task(p: (TIM3, PA6, PA7)) -> ! {
         if DUTY_CYCLE.signaled() {
             if let Some((x, y)) = DUTY_CYCLE.try_take() {
                 servo.set((x, y));
-                // info!("Duty Cycle: {}", (x, y));
+                // defmt::info!("Duty Cycle: {}", (x, y));
             }
         }
 
         if servo.finished() {
             let duty_cycle = DUTY_CYCLE.wait().await;
             servo.set(duty_cycle);
-            // info!("Duty Cycle: {}", duty_cycle);
+            // defmt::info!("Duty Cycle: {}", duty_cycle);
         }
 
         // Update Step Duty Cycle
         let (ox, oy) = servo.calc();
-        // info!("Duty Cycle: {}", (ox, oy));
+        // defmt::info!("Duty Cycle: {}", (ox, oy));
 
         ch_x.set_duty_cycle(ox as u16);
         ch_y.set_duty_cycle(oy as u16);

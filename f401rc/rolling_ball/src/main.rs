@@ -3,7 +3,7 @@
 
 use utils::prelude::*;
 
-mod test_task;
+// mod test_task;
 
 mod tasks;
 mod utils;
@@ -40,21 +40,45 @@ async fn entry(s: embassy_executor::Spawner) {
 
 #[embassy_executor::task]
 async fn main(_p: ()) {
-    // use tasks::{remote_ctrl::get_rc_data, servo_ctrl::set_servo, vision_mv::get_mv_position};
+    use {
+        pid::Pid,
+        tasks::{remote_ctrl::get_rc_data, servo_ctrl::set_servo, vision_mv::get_mv_position},
+    };
 
-    let mut t = init_ticker!(100);
+    let mut t = init_ticker!(1);
+
+    let mut pid = (
+        Pid::<f32>::new(0.0, 0.0), // x
+        Pid::<f32>::new(0.0, 0.0), // y
+    );
+
+    pid.0.p(0.0, 0.0).i(0.0, 0.0).d(0.0, 0.0);
+    pid.1.p(0.0, 0.0).i(0.0, 0.0).d(0.0, 0.0);
 
     loop {
-        // let rc = tasks::remote_ctrl::get_rc_data().await;
-        // tasks::servo_ctrl::set_servo((
-        //     (rc.ch_r_hori as f32 * 135f32 / 660f32) as i16,
-        //     (rc.ch_r_vert as f32 * 135f32 / 660f32) as i16,
-        // ))
-        // .await;
+        let rc = get_rc_data().await;
 
-        // use tasks::vision_mv::get_mv_position;
-        // let pos = get_mv_position().await;
-        // defmt::info!("MVP: {}", pos);
+        if rc.sw_right == -1 {
+            // Remote Control
+
+            (pid.0.reset_integral_term(), pid.1.reset_integral_term());
+
+            set_servo((
+                (rc.ch_r_hori as f32 * 135f32 / 660f32),
+                (rc.ch_r_vert as f32 * 135f32 / 660f32),
+            ))
+            .await;
+        } else {
+            // Vision Control
+
+            let (mx, my) = get_mv_position().await;
+
+            set_servo((
+                pid.0.next_control_output(mx).output,
+                pid.1.next_control_output(my).output,
+            ))
+            .await;
+        }
 
         t.next().await;
     }
