@@ -1,5 +1,5 @@
 //!
-//! # LED Task
+//! # Test Task
 //!
 
 use crate::{hal, init_ticker, utils::IntRqst};
@@ -31,8 +31,12 @@ use defmt::{error, info};
 pub async fn test_task(
     s: SendSpawner,
     p: (
-        (peripherals::PC7,),
         (
+            // led
+            peripherals::PC7,
+        ),
+        (
+            // servo pwm
             peripherals::TIM3,
             peripherals::PA6,
             peripherals::PA7,
@@ -40,11 +44,13 @@ pub async fn test_task(
             peripherals::PB1,
         ),
         (
+            // sbus rc
             peripherals::USART6,
             peripherals::PA12,
             peripherals::DMA2_CH1,
         ),
         (
+            // usart1 vision
             peripherals::USART1,
             peripherals::PA10,
             peripherals::PA9,
@@ -52,6 +58,7 @@ pub async fn test_task(
             peripherals::DMA2_CH7,
         ),
         (
+            // usart2 screen
             peripherals::USART2,
             peripherals::PA3,
             peripherals::PA2,
@@ -67,9 +74,6 @@ pub async fn test_task(
     s.must_spawn(u2_test(p.4));
 }
 
-use usart::{Config, Uart};
-
-// pa10pa11 pa3pa2
 #[task]
 async fn u1_test(
     p: (
@@ -80,6 +84,8 @@ async fn u1_test(
         peripherals::DMA2_CH7,
     ),
 ) {
+    use usart::{Config, Uart};
+
     let mut config = Config::default();
     config.baudrate = 115200;
     config.rx_pull = gpio::Pull::Up;
@@ -110,6 +116,8 @@ async fn u2_test(
         peripherals::DMA1_CH6,
     ),
 ) {
+    use usart::{Config, Uart};
+
     let mut config = Config::default();
     config.baudrate = 115200;
     config.rx_pull = gpio::Pull::Up;
@@ -130,12 +138,6 @@ async fn u2_test(
     }
 }
 
-use gpio::OutputType;
-use hal::time::hz;
-use timer::low_level::CountingMode::EdgeAlignedUp;
-use timer::simple_pwm::PwmPin;
-use timer::simple_pwm::SimplePwm;
-
 #[task]
 async fn pwm_test(
     p: (
@@ -146,6 +148,12 @@ async fn pwm_test(
         peripherals::PB1,
     ),
 ) {
+    use gpio::OutputType;
+    use hal::time::hz;
+    use timer::low_level::CountingMode::EdgeAlignedUp;
+    use timer::simple_pwm::PwmPin;
+    use timer::simple_pwm::SimplePwm;
+
     let mut t = init_ticker!(20);
 
     let pin_1 = PwmPin::new_ch1(p.1, OutputType::PushPull);
@@ -188,11 +196,11 @@ async fn pwm_test(
     }
 }
 
-use gpio::OutputOpenDrain as P;
-use gpio::{Level, Speed};
-
 #[task]
 async fn led_test(p: (peripherals::PC7,)) {
+    use gpio::OutputOpenDrain as P;
+    use gpio::{Level, Speed};
+
     let mut t = init_ticker!(130);
 
     let mut led = P::new(p.0, Level::High, Speed::Low);

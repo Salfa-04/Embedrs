@@ -32,6 +32,7 @@ pub mod vision_mv {
     mod mv_task;
     // mod mv_utils;
 
+    pub use mv_task::get_mv_position;
     pub use mv_task::mv_task;
 }
 

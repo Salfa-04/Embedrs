@@ -8,7 +8,7 @@ use defmt::info;
 use super::pwm_utils::{ServoPwm, pwm_init};
 use embassy_sync::{self as sync, once_lock, signal};
 use hal::peripherals::{PA6, PA7, TIM3};
-use sync::blocking_mutex::raw::CriticalSectionRawMutex as RM;
+use sync::blocking_mutex::raw::ThreadModeRawMutex as RM;
 use {once_lock::OnceLock, signal::Signal};
 
 static MAX_DUTY_CYCLE: OnceLock<u16> = OnceLock::new();

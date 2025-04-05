@@ -8,7 +8,7 @@ use crate::hal::{peripherals, usart};
 
 use defmt::{Format, debug, error};
 use embassy_sync::{blocking_mutex::raw, mutex::Mutex};
-use raw::CriticalSectionRawMutex as RM;
+use raw::ThreadModeRawMutex as RM;
 use usart::{Config, DataBits, Parity, StopBits, UartRx};
 
 use peripherals::{DMA2_CH1 as DMA_RX, PA12 as UART_RX, USART6 as UART_PERI};
