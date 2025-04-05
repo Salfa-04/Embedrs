@@ -2,7 +2,7 @@
 channel = "stable"
 profile = "minimal"
 
-targets = ["thumbv7em-none-eabihf"]
+targets = ["thumbv7em-none-eabihf", "thumbv7m-none-eabi"]
 
 # llvm-tools: cargo binstall cargo-binutils
 components = ["rust-src", "llvm-tools", "rustfmt"]

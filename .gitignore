@@ -1,11 +1,11 @@
-# Files
 /Cargo.lock
-/cfg.toml
-
 /*/Cargo.lock
+/*/*/Cargo.lock
+
+/cfg.toml
 /*/cfg.toml
+/*/*/cfg.toml
 
-# Directories
 /target/
-
 /*/target/
+/*/*/target/

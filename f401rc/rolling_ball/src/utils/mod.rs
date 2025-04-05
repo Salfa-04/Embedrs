@@ -5,7 +5,6 @@
 use defmt_rtt as _;
 use panic_probe as _;
 
-mod config;
 mod init;
 mod macros;
 
@@ -15,8 +14,6 @@ pub mod prelude {
     pub use ::cortex_m_rt as rt; // Runtime
     pub use ::embassy_stm32 as hal; // HAL
     pub use ::embassy_time::Timer as T; // Timer
-
-    pub use super::config::CONFIG; // Config
 }
 
 use prelude::hal::{self, bind_interrupts, peripherals};
