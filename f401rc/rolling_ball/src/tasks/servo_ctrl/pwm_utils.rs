@@ -20,13 +20,14 @@ impl ServoPwm {
         Self { duty_step, ..s }
     }
 
-    pub fn set(&mut self, set: (f32, f32)) {
+    pub fn set(&mut self, set: Option<(f32, f32)>) {
         if self.duty_cycle.is_none() {
-            self.duty_cycle = Some(set);
-            self.duty_cycle_step = set;
-        } else {
-            self.duty_cycle = Some(set);
+            if let Some(x) = set {
+                self.duty_cycle_step = x;
+            }
         }
+
+        self.duty_cycle = set;
     }
 
     pub fn finished(&self) -> bool {
@@ -37,7 +38,7 @@ impl ServoPwm {
         }
     }
 
-    pub fn calc(&mut self) -> (f32, f32) {
+    pub fn calc(&mut self) -> Option<(f32, f32)> {
         if let Some(duty_cycle) = self.duty_cycle {
             if duty_cycle.0 > self.duty_cycle_step.0 {
                 self.duty_cycle_step.0 += self.duty_step;
@@ -62,9 +63,11 @@ impl ServoPwm {
                     self.duty_cycle_step.1 = duty_cycle.1;
                 }
             }
-        }
 
-        (self.duty_cycle_step.0, self.duty_cycle_step.1)
+            Some((self.duty_cycle_step.0, self.duty_cycle_step.1))
+        } else {
+            None
+        }
     }
 }
 

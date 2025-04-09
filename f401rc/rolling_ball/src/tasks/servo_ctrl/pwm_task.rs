@@ -11,12 +11,15 @@ use sync::blocking_mutex::raw::ThreadModeRawMutex as RM;
 use {once_lock::OnceLock, signal::Signal};
 
 static MAX_DUTY_CYCLE: OnceLock<u16> = OnceLock::new();
-static DUTY_CYCLE: Signal<RM, (f32, f32)> = Signal::new();
+static DUTY_CYCLE: Signal<RM, Option<(f32, f32)>> = Signal::new();
 
 /// PWM Duty Cycle Set
 /// x, y: from -135 to 135
-pub async fn set_servo(angle: (f32, f32)) {
-    let (x, y) = angle;
+pub async fn set_servo(angle: Option<(f32, f32)>) {
+    let Some((x, y)) = angle else {
+        DUTY_CYCLE.signal(None);
+        return;
+    };
 
     assert!(x >= -135.0 && x <= 135.0);
     assert!(y >= -135.0 && y <= 135.0);
@@ -25,10 +28,10 @@ pub async fn set_servo(angle: (f32, f32)) {
     // duty_cycle_percent = (x / 135° + 1.5) / 20ms
     //          x = -135° to 135°
     // set = duty_cycle_percent * duty_cycle_max
-    DUTY_CYCLE.signal((
+    DUTY_CYCLE.signal(Some((
         (x as f32 + 202.5) * max as f32 / 2700f32,
         (y as f32 + 202.5) * max as f32 / 2700f32,
-    ));
+    )));
 }
 
 #[super::task]
@@ -49,8 +52,8 @@ pub async fn pwm_task(p: (TIM3, PA6, PA7)) -> ! {
 
     loop {
         if DUTY_CYCLE.signaled() {
-            if let Some((x, y)) = DUTY_CYCLE.try_take() {
-                servo.set((x, y));
+            if let Some(x) = DUTY_CYCLE.try_take() {
+                servo.set(x);
                 // defmt::info!("Duty Cycle: {}", (x, y));
             }
         }
@@ -62,11 +65,14 @@ pub async fn pwm_task(p: (TIM3, PA6, PA7)) -> ! {
         }
 
         // Update Step Duty Cycle
-        let (ox, oy) = servo.calc();
-        // defmt::info!("Duty Cycle: {}", (ox, oy));
-
-        ch_x.set_duty_cycle(ox as u16);
-        ch_y.set_duty_cycle(oy as u16);
+        if let Some((ox, oy)) = servo.calc() {
+            ch_x.set_duty_cycle(ox as u16);
+            ch_y.set_duty_cycle(oy as u16);
+            // defmt::info!("Duty Cycle: {}", (ox, oy));
+        } else {
+            ch_x.set_duty_cycle_fully_off();
+            ch_y.set_duty_cycle_fully_off();
+        }
 
         t.next().await;
     }

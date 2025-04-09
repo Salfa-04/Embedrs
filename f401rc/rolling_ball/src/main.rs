@@ -28,6 +28,11 @@ async fn entry(s: embassy_executor::Spawner) {
     }
 
     {
+        let p = (p.USART2, p.PA3, p.PA2, p.DMA1_CH5, p.DMA1_CH6);
+        s.must_spawn(tasks::serial_screen::screen_task(p));
+    }
+
+    {
         let p = (p.USART1, p.PA10, p.DMA2_CH2);
         s.must_spawn(tasks::vision_mv::mv_task(p));
     }
@@ -42,10 +47,13 @@ async fn entry(s: embassy_executor::Spawner) {
 async fn main(_p: ()) {
     use {
         pid::Pid,
-        tasks::{remote_ctrl::get_rc_data, servo_ctrl::set_servo, vision_mv::get_mv_position},
+        tasks::{
+            remote_ctrl::get_rc_data, serial_screen::get_screen_fb, servo_ctrl::set_servo,
+            vision_mv::get_mv_position,
+        },
     };
 
-    let mut t = init_ticker!(1);
+    let mut t = init_ticker!(20);
 
     let mut pid = (
         Pid::<f32>::new(0.0, 0.0), // x
@@ -57,27 +65,44 @@ async fn main(_p: ()) {
 
     loop {
         let rc = get_rc_data().await;
+        let ss = get_screen_fb().await;
 
-        if rc.sw_right == -1 {
-            // Remote Control
+        match rc.sw_right {
+            -1 => {
+                // Stop Servo
+                pid.0.reset_integral_term();
+                pid.1.reset_integral_term();
+                set_servo(None).await;
+            }
 
-            (pid.0.reset_integral_term(), pid.1.reset_integral_term());
+            0 => {
+                // Remote Control
+                pid.0.reset_integral_term();
+                pid.1.reset_integral_term();
+                set_servo(Some((
+                    (rc.ch_r_hori as f32 * 135f32 / 660f32),
+                    (rc.ch_r_vert as f32 * 135f32 / 660f32),
+                )))
+                .await;
+            }
 
-            set_servo((
-                (rc.ch_r_hori as f32 * 135f32 / 660f32),
-                (rc.ch_r_vert as f32 * 135f32 / 660f32),
-            ))
-            .await;
-        } else {
-            // Vision Control
+            1 => {
+                // Vision Control
 
-            let (mx, my) = get_mv_position().await;
+                match get_mv_position() {
+                    Some((mx, my)) => {
+                        set_servo(Some((
+                            pid.0.next_control_output(mx).output,
+                            pid.1.next_control_output(my).output,
+                        )))
+                        .await
+                    }
 
-            set_servo((
-                pid.0.next_control_output(mx).output,
-                pid.1.next_control_output(my).output,
-            ))
-            .await;
+                    None => continue,
+                }
+            }
+
+            _ => unreachable!(),
         }
 
         t.next().await;

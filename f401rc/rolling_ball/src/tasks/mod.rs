@@ -40,8 +40,8 @@ pub mod serial_screen {
     use super::{IntRqst, task};
 
     mod screen_task;
-    // mod screen_utils;
 
+    pub use screen_task::get_screen_fb;
     pub use screen_task::screen_task;
 }
 
