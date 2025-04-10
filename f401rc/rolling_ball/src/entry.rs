@@ -53,26 +53,18 @@ async fn vision_control(pid: &mut (Pid<f32>, Pid<f32>)) -> Option<(f32, f32)> {
     match get_mv_position() {
         Some((mx, my)) => {
             let idx = VDATA[11].load(Relaxed);
+            let (tx, ty) = POSI[VDATA[idx as usize].load(Relaxed) as usize];
 
-            {
-                static MV_P_LAST: (AtomicU8, AtomicU8) = unsafe { core::mem::zeroed() };
-                let (last_x, last_y) = (MV_P_LAST.0.load(Relaxed), MV_P_LAST.1.load(Relaxed));
-
-                // Check if the position is stable
-                // If the position is stable, increase the index
-                if VDATA[10].load(Relaxed) != 0 // Running
-                    && (mx as i16 - last_x as i16) < 10 // Stable
-                    && (my as i16 - last_y as i16) < 10 // Stable
+            // Check if the position is stable
+            // If the position is stable, increase the index
+            if VDATA[10].load(Relaxed) != 0 // Running
+                    && (mx as i16 - tx as i16) < 10 // Stable
+                    && (my as i16 - ty as i16) < 10 // Stable
                     && idx < 9
-                {
-                    VDATA[11].store(idx + 1, Relaxed);
-                }
-
-                MV_P_LAST.0.store(mx, Relaxed);
-                MV_P_LAST.1.store(my, Relaxed);
+            {
+                VDATA[11].store(idx + 1, Relaxed);
             }
 
-            let (tx, ty) = POSI[VDATA[idx as usize].load(Relaxed) as usize];
             (pid.0.setpoint(tx as f32), pid.1.setpoint(ty as f32));
 
             Some((

@@ -68,7 +68,8 @@ impl DjiSBusPacket {
     const DJI_MIDDL: i16 = (Self::DJI_MAX + Self::DJI_MIN) as i16 / 2;
 
     const fn new() -> DjiSBusPacket {
-        unsafe { core::mem::zeroed() }
+        let s = unsafe { core::mem::zeroed() };
+        Self { sw_right: -1, ..s }
     }
 }
 

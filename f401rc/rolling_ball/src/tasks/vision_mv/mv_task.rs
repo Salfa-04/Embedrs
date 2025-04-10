@@ -25,8 +25,8 @@ pub fn get_mv_position() -> Option<(u8, u8)> {
 
 fn vision_parse(data: &[u8]) {
     // {
-    //     let s = core::str::from_utf8(data);
-    //     defmt::debug!("Vision MV: {}", defmt::Debug2Format(&s));
+    // let s = core::str::from_utf8(data);
+    // defmt::debug!("Vision MV: {}", defmt::Debug2Format(&s));
     //     return;
     // }
 
@@ -42,6 +42,7 @@ fn vision_parse(data: &[u8]) {
                 match (x.trim().parse::<f32>(), y.trim().parse::<f32>()) {
                     (Ok(x), Ok(y)) => {
                         V_POSITION.signal((x, y));
+                        // defmt::debug!("Vision MV: [{:?}]", (x, y));
                     }
 
                     _ => defmt::error!("Vision MV: [{:?}]", (x, y)),
@@ -54,7 +55,7 @@ fn vision_parse(data: &[u8]) {
 #[super::task]
 pub async fn mv_task(p: (USART1, PA10, DMA2_CH2)) -> ! {
     let mut config = Config::default();
-    config.baudrate = 115200;
+    config.baudrate = 500_000;
     config.rx_pull = gpio::Pull::Up;
 
     let mut rx = UartRx::new(p.0, IntRqst, p.1, p.2, config)
