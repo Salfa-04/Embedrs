@@ -8,11 +8,13 @@ use usart::{Config, UartRx};
 
 static V_POSITION: Signal<RM, (f32, f32)> = Signal::new();
 
-pub fn get_mv_position() -> Option<(f32, f32)> {
-    // *V_POSITION.lock().await
+pub fn get_mv_position() -> Option<(u8, u8)> {
     if V_POSITION.signaled() {
-        if let Some(p) = V_POSITION.try_take() {
-            Some(p)
+        if let Some((x, y)) = V_POSITION.try_take() {
+            assert!(x >= 0.0 && x <= 255.0);
+            assert!(y >= 0.0 && y <= 255.0);
+
+            Some((x as u8, y as u8))
         } else {
             None
         }
@@ -22,6 +24,12 @@ pub fn get_mv_position() -> Option<(f32, f32)> {
 }
 
 fn vision_parse(data: &[u8]) {
+    // {
+    //     let s = core::str::from_utf8(data);
+    //     defmt::debug!("Vision MV: {}", defmt::Debug2Format(&s));
+    //     return;
+    // }
+
     let data = data.split(|&x| x == b',');
 
     for data in data {
@@ -47,11 +55,12 @@ fn vision_parse(data: &[u8]) {
 pub async fn mv_task(p: (USART1, PA10, DMA2_CH2)) -> ! {
     let mut config = Config::default();
     config.baudrate = 115200;
-    config.rx_pull = gpio::Pull::None;
+    config.rx_pull = gpio::Pull::Up;
 
     let mut rx = UartRx::new(p.0, IntRqst, p.1, p.2, config)
         .inspect_err(|e| defmt::error!("Vison MV: {:?}", e))
         .unwrap();
+    defmt::debug!("Vision MV Initialized!");
 
     let mut buffer = [0u8; 64];
 

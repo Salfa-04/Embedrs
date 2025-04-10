@@ -41,7 +41,7 @@ pub mod serial_screen {
 
     mod screen_task;
 
-    pub use screen_task::get_screen_fb;
+    pub use screen_task::screen_target;
     pub use screen_task::screen_task;
 }
 

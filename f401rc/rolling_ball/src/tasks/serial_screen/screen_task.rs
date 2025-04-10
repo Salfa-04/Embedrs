@@ -2,7 +2,7 @@ use {super::IntRqst, crate::hal};
 
 use blocking_mutex::raw::ThreadModeRawMutex as RM;
 use core::sync::atomic::{AtomicU8, Ordering::Relaxed};
-use defmt::{debug, error, info};
+use defmt::{debug, error};
 use embassy_sync::{blocking_mutex, mutex::Mutex, signal::Signal};
 use hal::{gpio, mode::Async, peripherals, usart};
 use peripherals::{DMA1_CH5, DMA1_CH6, PA2, PA3, USART2};
@@ -10,8 +10,8 @@ use usart::{Config, Uart, UartTx};
 
 static TARGET: Signal<RM, [u8; 10]> = Signal::new();
 
-pub fn get_screen_fb() -> impl Future<Output = [u8; 10]> {
-    TARGET.wait()
+pub fn screen_target() -> Option<[u8; 10]> {
+    TARGET.try_take()
 }
 
 async fn rcv_parse(rcv: &[u8], tx_buf: &mut [u8; 10]) {
@@ -25,6 +25,7 @@ async fn rcv_parse(rcv: &[u8], tx_buf: &mut [u8; 10]) {
             16 => {
                 tx_buf.fill(0);
                 STATES.store(0, Relaxed);
+                TARGET.signal([0; 10]);
             }
 
             19 => {
@@ -43,7 +44,7 @@ async fn rcv_parse(rcv: &[u8], tx_buf: &mut [u8; 10]) {
                 }
             }
 
-            _ => info!("Unexpected Value: [{}] in {}", data, rcv),
+            _ => error!("Unexpected Value: [{}] in {}", data, rcv),
         }
     }
 }

@@ -38,7 +38,7 @@ pub fn sys_init() -> (embassy_stm32::Peripherals,) {
         rcc.apb1_pre = rcc::APBPrescaler::DIV2;
         rcc.apb2_pre = rcc::APBPrescaler::DIV1;
 
-        rcc.ls = rcc::LsConfig::default_lsi();
+        rcc.ls = rcc::LsConfig::default_lse();
         rcc.mux.clk48sel = rcc::mux::Clk48sel::PLL1_Q;
         rcc.mux.sdiosel = rcc::mux::Sdiosel::SYS; // 84Mhz
 
