@@ -8,13 +8,13 @@ use usart::{Config, UartRx};
 
 static V_POSITION: Signal<RM, (f32, f32)> = Signal::new();
 
-pub fn get_mv_position() -> Option<(u8, u8)> {
+pub fn get_mv_position() -> Option<(u16, u16)> {
     if V_POSITION.signaled() {
         if let Some((x, y)) = V_POSITION.try_take() {
-            assert!(x >= 0.0 && x <= 255.0);
-            assert!(y >= 0.0 && y <= 255.0);
+            assert!(x >= 0.0 && x <= u16::MAX as _);
+            assert!(y >= 0.0 && y <= u16::MAX as _);
 
-            Some((x as u8, y as u8))
+            Some((x as _, y as _))
         } else {
             None
         }
