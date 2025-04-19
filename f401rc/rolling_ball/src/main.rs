@@ -1,10 +1,9 @@
 #![no_std]
 #![no_main]
 
-use entry::main;
 use utils::prelude::*;
 
-mod entry;
+mod controller;
 mod tasks;
 mod utils;
 
@@ -41,6 +40,6 @@ async fn entry(s: embassy_executor::Spawner) {
 
     {
         let p = ();
-        s.must_spawn(main(p));
+        s.must_spawn(controller::main(p));
     }
 }

@@ -1,12 +1,14 @@
-use {super::IntRqst, crate::hal};
+use {super::IntRqst, crate::hal, crate::sync};
 
-use embassy_sync::{self as sync, signal::Signal};
+use crate::controller::consts::POSI;
 use hal::{gpio, peripherals, usart};
 use peripherals::{DMA2_CH2, PA10, USART1};
 use sync::blocking_mutex::raw::ThreadModeRawMutex as RM;
+use sync::{mutex::Mutex, signal::Signal};
 use usart::{Config, UartRx};
 
 static V_POSITION: Signal<RM, (f32, f32)> = Signal::new();
+static V_POSITIONS: Mutex<RM, [(f32, f32); 10]> = Mutex::new(POSI);
 
 pub fn get_mv_position() -> Option<(u16, u16)> {
     if V_POSITION.signaled() {
@@ -23,29 +25,70 @@ pub fn get_mv_position() -> Option<(u16, u16)> {
     }
 }
 
-fn vision_parse(data: &[u8]) {
+pub async fn get_mv_positions() -> [(f32, f32); 10] {
+    let rst = *V_POSITIONS.lock().await;
+    defmt::debug!("Vision MV: {:?}", rst);
+    rst
+}
+
+async fn vision_parse(data: &[u8]) {
     // {
-    // let s = core::str::from_utf8(data);
-    // defmt::debug!("Vision MV: {}", defmt::Debug2Format(&s));
+    //     let s = core::str::from_utf8(data);
+    //     defmt::debug!("Vision MV: {}", defmt::Debug2Format(&s));
     //     return;
     // }
 
-    let data = data.split(|&x| x == b',');
+    if data.contains(&b'{') && data.contains(&b'}') {
+        defmt::debug!("Vision MV: {:?}", data);
 
-    for data in data {
-        if let Ok(x) = core::str::from_utf8(data.trim_ascii()) {
-            if !x.starts_with('[') || !x.ends_with(']') || !x.contains(':') {
-                continue;
-            }
+        let Some(idx_f) = data.iter().position(|&x| x == b'{') else {
+            unreachable!("Vision MV: No start bracket");
+        };
 
-            if let Some((x, y)) = x[1..x.len() - 1].split_once(':') {
-                match (x.trim().parse::<f32>(), y.trim().parse::<f32>()) {
-                    (Ok(x), Ok(y)) => {
-                        V_POSITION.signal((x, y));
-                        // defmt::debug!("Vision MV: [{:?}]", (x, y));
+        let Some(idx_b) = data.iter().position(|&x| x == b'}') else {
+            unreachable!("Vision MV: No end bracket");
+        };
+
+        //  {(:),(:),..,(:)}
+        // => (),(),(),..,(),
+        let data = data[idx_f + 1..idx_b].trim_ascii();
+        for (idx, data) in data.split(|&x| x == b',').enumerate() {
+            if let Ok(x) = core::str::from_utf8(data.trim_ascii()) {
+                if !x.starts_with('(') || !x.ends_with(')') || !x.contains(':') {
+                    defmt::error!("Vision MV: {:?}", x);
+                    continue;
+                }
+
+                if let Some((x, y)) = x[1..x.len() - 1].split_once(':') {
+                    match (x.trim().parse::<f32>(), y.trim().parse::<f32>()) {
+                        (Ok(x), Ok(y)) => {
+                            let mut position = V_POSITIONS.lock().await;
+                            if let Some(p) = position.get_mut(idx + 1) {
+                                *p = (x, y);
+                            }
+                        }
+
+                        _ => defmt::error!("Vision MV: [{:?}]", (x, y)),
                     }
+                }
+            }
+        }
+    } else {
+        for data in data.split(|&x| x == b',') {
+            if let Ok(x) = core::str::from_utf8(data.trim_ascii()) {
+                if !x.starts_with('[') || !x.ends_with(']') || !x.contains(':') {
+                    continue;
+                }
 
-                    _ => defmt::error!("Vision MV: [{:?}]", (x, y)),
+                if let Some((x, y)) = x[1..x.len() - 1].split_once(':') {
+                    match (x.trim().parse::<f32>(), y.trim().parse::<f32>()) {
+                        (Ok(x), Ok(y)) => {
+                            V_POSITION.signal((x, y));
+                            // defmt::debug!("Vision MV: [{:?}]", (x, y));
+                        }
+
+                        _ => defmt::error!("Vision MV: [{:?}]", (x, y)),
+                    }
                 }
             }
         }
@@ -63,11 +106,11 @@ pub async fn mv_task(p: (USART1, PA10, DMA2_CH2)) -> ! {
         .unwrap();
     defmt::debug!("Vision MV Initialized!");
 
-    let mut buffer = [0u8; 64];
+    let mut buffer = [0u8; 200];
 
     loop {
         match rx.read_until_idle(&mut buffer).await {
-            Ok(x) => vision_parse(&buffer[..x]),
+            Ok(x) => vision_parse(&buffer[..x]).await,
             Err(e) => defmt::error!("Vison MV: {:?}", e),
         }
     }

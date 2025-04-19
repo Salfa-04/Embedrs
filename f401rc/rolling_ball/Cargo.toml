@@ -11,7 +11,7 @@ autotests    = false
 
 
 [dependencies]
-pid = "4.1"
+pid = "4.0"
 
 arraydeque = { version = "0.5", default-features = false }
 

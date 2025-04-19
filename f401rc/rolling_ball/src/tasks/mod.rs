@@ -11,7 +11,7 @@ pub mod remote_ctrl {
     mod rc_task;
     mod sbus;
 
-    // pub use rc_task::DjiSBusPacket;
+    pub use rc_task::DjiSBusPacket;
     pub use rc_task::get_rc_data;
     pub use rc_task::rc_task;
 }
@@ -33,6 +33,7 @@ pub mod vision_mv {
     // mod mv_utils;
 
     pub use mv_task::get_mv_position;
+    pub use mv_task::get_mv_positions;
     pub use mv_task::mv_task;
 }
 
