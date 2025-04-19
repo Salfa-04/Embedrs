@@ -26,11 +26,13 @@ release.lto   = true
 defmt        = "1.0"
 defmt-rtt    = "1.0"
 embassy-sync = "0.6"
+static_cell  = "2.1"
 
 embedded-io  = { version = "0.6", features = ["defmt-03"] }
 panic-probe  = { version = "1.0", features = ["print-defmt"] }
 cortex-m-rt  = { version = "0.7", features = ["device"] }
 embassy-time = { version = "0.4", features = ["tick-hz-32_768"] }
+
 [workspace.dependencies.cortex-m]
 version  = "0.7"
 features = ["critical-section-single-core", "linker-plugin-lto"]

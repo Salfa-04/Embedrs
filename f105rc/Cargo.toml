@@ -14,7 +14,7 @@ exclude = [".cargo", ".git", "target"]
 [workspace.dependencies.embassy-stm32]
 version = "0.2"
 ### Only chips of the same model can be used at the same time
-features = ["defmt", "memory-x", "time-driver-any", "stm32f103c8"]
+features = ["defmt", "memory-x", "time-driver-any", "stm32f105rc"]
 
 
 [workspace.dependencies]
