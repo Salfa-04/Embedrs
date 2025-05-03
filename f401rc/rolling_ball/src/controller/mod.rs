@@ -42,8 +42,8 @@ pub async fn main(_p: ()) {
                 // Remote Control
                 (pid_v.clear(), pid_p.clear());
 
-                let x = rc.ch_r_hori as f32 * 15f32 / 660f32;
-                let y = rc.ch_r_vert as f32 * 15f32 / 660f32;
+                let x = rc.ch_r_hori as f32 * 14f32 / 660f32;
+                let y = rc.ch_r_vert as f32 * 14f32 / 660f32;
 
                 {
                     static RECORD_ONCE: AtomicBool = AtomicBool::new(true);

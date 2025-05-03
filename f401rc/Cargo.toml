@@ -1,20 +1,25 @@
 [workspace]
+resolver = "3"
+
 package.version = "0.0.0"
 package.edition = "2024"
 package.publish = false
 package.authors = ["Salfa <me@salfa.cc>"]
+
+members         = ["*"]
+exclude         = [".cargo", ".git", "target"]
 default-members = []
-
-resolver = "3"
-members  = ["*"]
-
-exclude = [".cargo", ".git", "target"]
 
 
 [workspace.dependencies.embassy-stm32]
 version = "0.2"
 ### Only chips of the same model can be used at the same time
 features = ["defmt", "memory-x", "time-driver-any", "stm32f401rc"]
+
+
+[profile]
+release.debug = true
+release.lto   = true
 
 
 [workspace.dependencies]
@@ -35,10 +40,6 @@ features = ["critical-section-single-core", "linker-plugin-lto"]
 version  = "0.7"
 features = ["arch-cortex-m", "executor-thread"]
 
-
-[profile]
-release.debug = true
-release.lto   = true
 
 [profile.dev.package]
 cortex-m.opt-level         = 3

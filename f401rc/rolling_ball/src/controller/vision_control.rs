@@ -5,7 +5,7 @@ use crate::tasks::{
     vision_mv::{get_mv_position, get_mv_positions},
 };
 
-pub async fn vision_control_set(rc: &DjiSBusPacket, pid_p: &mut PidTd<f32>) {
+pub async fn vision_control_set(rc: &DjiSBusPacket, pid_p: &mut PidTd) {
     let mut position = POSI_NUM.lock().await;
     pid_p.setpoint(get_mv_positions().await[*position]);
 
@@ -43,10 +43,7 @@ pub async fn vision_control_set(rc: &DjiSBusPacket, pid_p: &mut PidTd<f32>) {
     }
 }
 
-pub async fn vision_control_update(
-    pid_p: &mut PidTd<f32>,
-    pid_v: &mut PidTd<f32>,
-) -> Option<(f32, f32)> {
+pub async fn vision_control_update(pid_p: &mut PidTd, pid_v: &mut PidTd) -> Option<(f32, f32)> {
     match get_mv_position() {
         Some((mx, my)) => {
             // let (tx, ty) = (pid_p.0.setpoint, pid_p.1.setpoint);

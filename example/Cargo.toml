@@ -14,7 +14,7 @@ default-members = []
 [workspace.dependencies.embassy-stm32]
 version = "0.2"
 ### Only chips of the same model can be used at the same time
-features = ["defmt", "memory-x", "time-driver-any", "stm32f105rc"]
+features = ["defmt", "memory-x", "time-driver-any", "<CHIP>"]
 
 
 [profile]

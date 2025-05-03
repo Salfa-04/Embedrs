@@ -1,20 +1,20 @@
 [workspace]
+resolver = "3"
+
 package.version = "0.0.0"
 package.edition = "2024"
 package.publish = false
 package.authors = ["Salfa <me@salfa.cc>"]
+
+members         = ["*"]
+exclude         = [".cargo", ".git", "target"]
 default-members = []
-
-resolver = "3"
-members  = ["*"]
-
-exclude = [".cargo", ".git", "target"]
 
 
 [workspace.dependencies.embassy-stm32]
 version = "0.2"
 ### Only chips of the same model can be used at the same time
-features = ["defmt", "memory-x", "time-driver-any", "stm32h723vg"]
+features = ["defmt", "time-driver-any", "stm32h723vg"]
 
 
 [profile]
