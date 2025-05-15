@@ -2,7 +2,7 @@ use crate::hal::{self, bind_interrupts, peripherals};
 
 bind_interrupts! {
     pub struct IntRqst {
-        UART4 => hal::usart::InterruptHandler<peripherals::UART4>;
+        USART3 => hal::usart::InterruptHandler<peripherals::USART3>;
 
         // USART1 => hal::usart::InterruptHandler<peripherals::USART1>;
         // USART2 => hal::usart::InterruptHandler<peripherals::USART2>;

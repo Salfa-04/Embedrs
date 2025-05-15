@@ -19,8 +19,10 @@ arraydeque = { version = "0.5", default-features = false }
 defmt.workspace            = true
 defmt-rtt.workspace        = true
 panic-probe.workspace      = true
+static_cell.workspace      = true
 cortex-m.workspace         = true
 cortex-m-rt.workspace      = true
+bitfield-struct.workspace  = true
 embassy-executor.workspace = true
 embassy-time.workspace     = true
 embassy-sync.workspace     = true

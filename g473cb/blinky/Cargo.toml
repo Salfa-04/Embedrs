@@ -1,5 +1,5 @@
 [package]
-name = "<NAME>"
+name = "blinky"
 
 version.workspace = true
 edition.workspace = true
@@ -11,6 +11,10 @@ autotests    = false
 
 
 [dependencies]
+
+
+crc        = { version = "3.3", default-features = false }
+arraydeque = { version = "0.5", default-features = false }
 
 
 defmt.workspace            = true

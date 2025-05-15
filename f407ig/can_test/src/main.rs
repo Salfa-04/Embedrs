@@ -3,6 +3,11 @@
 
 use utils::prelude::*;
 
+use hal::can::{
+    Can, RxBuf, TxBuf,
+    filter::{BankConfig, Mask32},
+};
+
 mod controller;
 mod tasks;
 mod utils;
@@ -22,11 +27,6 @@ async fn entry(s: embassy_executor::Spawner) {
     }
 
     {
-        use hal::can::{
-            Can, RxBuf, TxBuf,
-            filter::{BankConfig, Mask32},
-        };
-
         let (mut can1, mut can2) = {
             let mut can1 = Can::new(p.CAN1, p.PD0, p.PD1, utils::IntRqst);
             let mut can2 = Can::new(p.CAN2, p.PB5, p.PB6, utils::IntRqst);
@@ -86,16 +86,42 @@ async fn entry(s: embassy_executor::Spawner) {
     }
 }
 
+#[bitfield(u64, clone = false, debug = false, default = false, defmt = true)]
+struct M2006 {
+    angle: u16,
+    speed: i16,
+    current: i16,
+    __: u16,
+}
+
 #[embassy_executor::task(pool_size = 2)]
 async fn can_task(mut can: embassy_stm32::can::Can<'static>) {
-    use hal::can::Frame;
+    // use hal::can::Frame;
 
-    let frame = Frame::new_standard(0x6FF, &[0xE9, 0x00, 0x3, 0xCC]).unwrap();
+    // let frame = Frame::new_standard(0x6FF, &[0xE9, 0x00, 0x3, 0xCC]).unwrap();
 
     loop {
-        can.write(&frame).await;
-        defmt::info!("CAN Read: {:?}", can.try_read());
+        // can.write(&frame).await;
 
-        T::after_millis(100).await;
+        let frame = match can.read().await {
+            Ok(x) => x.frame,
+            Err(e) => {
+                defmt::error!("ERROR: {:?}", e);
+                continue;
+            }
+        };
+
+        let data = frame.data();
+
+        // let a = unsafe { *(frame.data().as_ptr() as *const u64) };
+
+        let m2006 = M2006::new()
+            .with_angle(((data[0] as u16) << 8 | (data[1] as u16)) as _)
+            .with_speed(((data[2] as u16) << 8 | (data[3] as u16)) as _)
+            .with_current(((data[4] as u16) << 8 | (data[5] as u16)) as _);
+
+        defmt::info!("ID={:x}, DATA={}", defmt::Debug2Format(&frame.id()), m2006);
+
+        // T::after_millis(100).await;
     }
 }
